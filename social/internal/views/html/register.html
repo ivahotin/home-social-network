@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Highload social network</title>
+    <link rel="stylesheet" type="text/css" href="../css/style.css" />
+    <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+            integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+            crossorigin="anonymous"
+    />
+</head>
+<body>
+<div class="offline text-center" id="offline" style="display: none">You are offline</div>
+<div class="container text-center main border">
+    <h1>Welcome to highload</h1>
+    <h2>Please register</h2>
+    <form id="register">
+        <p id="error"></p>
+        <input class="form-control login" placeholder="Username" type="text" name="username" id="username" required/>
+        <input
+                class="form-control login"
+                placeholder="Password"
+                type="password"
+                name="password"
+                id="password"
+                required
+        />
+        <input class="form-control login" placeholder="First name" type="text" name="firstname" id="firstname" required/>
+        <input class="form-control login" placeholder="Last name" type="text" name="lastname" id="lastname" required/>
+        <input class="form-control login" placeholder="Age" name="age" id="age" type="number" min="1" max="100" required/>
+        <select class="form-control login" placeholder="Gender" name="gender" id="gender" required>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select>
+        <textarea class="form-control login" placeholder="Interests" name="interests" id="interests" rows="2" required>
+        </textarea>
+        <input class="form-control login" placeholder="City" type="text" name="city" id="city" required/>
+        <button class="btn btn-success form-control login" type="submit">Register</button>
+    </form>
+
+    <a href="/auth/sign-in">Login</a>
+    <script src="../js/app.js"></script>
+    <script type="module" src="../js/register.js"></script>
+</div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+body {
+    font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+    color: #00B7FF;
+}
+
+.stories {
+    margin-top: 1em;
+}
+
+.story {
+    margin-bottom: 1em;
+}
+
+.form-inline {
+    margin-bottom: 5px;
+}
+
+.create {
+    margin-top: 1em;
+}
+
+@media (max-width: 992px) {
+    .mobile-sm-padding {
+        margin-bottom: 5px;
+    }
+}
+
+.login {
+    margin-top: 1em;
+}
+
+.main {
+    margin-top: 1em;
+}
+
+.form-width-override {
+    width: inherit;
+}
+
+.btn-padding {
+    padding-bottom: 5px;
+}
+
+.image-padding {
+    padding: 5px;
+    padding-bottom: 15px
+}
+
+img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 3px;
+    border: 1px solid lightgray;
+}

@@ -1,0 +1,35 @@
+version: '3'
+
+services: 
+    db:
+        image: mysql:8.0
+        restart: always
+        container_name: social-db
+        env_file: 
+            - .local.env
+        environment: 
+            - MYSQL_DATABASE=social_db
+            - MYSQL_USER=user
+            - MYSQL_PASSWORD=password
+            - MYSQL_ROOT_PASSWORD=password
+        networks: 
+            - social-net
+        ports:
+            - "3306:3306"
+    # social:
+    #     build: ./social
+    #     container_name: social-network
+    #     env_file: 
+    #         - .local.env
+    #     ports: 
+    #         - "8000:8000"
+    #     depends_on: 
+    #         - db
+    #     networks: 
+    #         - mynet
+networks:
+    social-net:
+        driver: bridge
+
+volumes:
+    db:
