@@ -1,3 +1,34 @@
+let logout = async (e) => {
+    e.preventDefault();
+    window.localStorage.removeItem("username");
+    try {
+        await fetch("/auth/sign-out", { method: "POST" });
+    } catch (e) { }
+    window.location = "/auth/sign-in";
+};
+
+let showSearchContainer = async (e) => {
+    document.getElementById("search-container").style.display = "block";
+    document.getElementById("me-container").style.display = "none";
+};
+
+let showMeContainer = async (e) => {
+    document.getElementById("search-container").style.display = "none";
+    document.getElementById("me-container").style.display = "block";
+
+    const res = await fetch("/profiles/me", {
+        method: "GET",
+        "headers": {
+            "Content-Type": "application/json",
+        }
+    });
+
+    if (res.ok) {
+        let data = await res.json()
+        console.log(data)
+    }
+};
+
 /**
  * When the client gets off-line, it shows an off line warning to the user
  * so that it is clear that the data is not updating

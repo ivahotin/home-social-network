@@ -15,7 +15,8 @@ func main() {
 	db := db2.NewDbPool()
 	authStorage := storage.NewMySqlAuthStorage(db)
 	authService := service.NewAuthService(authStorage)
-	application := app.NewApplication(authService, authService)
+	profileService := service.NewProfileService(authStorage)
+	application := app.NewApplication(authService, authService, profileService)
 
 	go application.Run()
 

@@ -14,9 +14,13 @@ type Application struct {
 	srv *http.Server
 }
 
-func NewApplication(signUpUseCase usecases.SignUpUseCase, signInUseCase usecases.SignInUseCase) *Application {
+func NewApplication(
+	signUpUseCase usecases.SignUpUseCase,
+	signInUseCase usecases.SignInUseCase,
+	getProfileByUsername usecases.GetProfileGetUsernameUseCase) *Application {
 	return &Application{
-		transport.NewServer(":8080", transport.MakeEndpoints(signUpUseCase, signInUseCase)),
+		transport.NewServer(
+			":8080", transport.MakeEndpoints(signUpUseCase, signInUseCase, getProfileByUsername)),
 	}
 }
 

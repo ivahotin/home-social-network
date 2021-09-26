@@ -13,11 +13,8 @@ window.onload = async () => {
                 }
             });
             if (res.ok) {
-                let body = await res.json()
-                body.cookie
                 // Store users username via local storage & redirect to stories wall
                 window.localStorage.setItem("username", username);
-                window.localStorage.setItem("token", body["token"]);
                 window.location = "/";
             } else if (res.status === 401) {
                 e.target.querySelector("#error").innerText = "bad username/password combination";

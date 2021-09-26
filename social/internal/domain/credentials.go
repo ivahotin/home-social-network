@@ -11,10 +11,8 @@ type Credentials struct {
 	RawPassword string
 }
 
-const secret = "3QyPZH3ZlSLfYsUilMbf"
-
 func NewCredentials(username string, password string) (*Credentials, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password + secret), 10)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +25,7 @@ func NewCredentials(username string, password string) (*Credentials, error) {
 }
 
 func (credentials *Credentials) CheckPassword(profile *Profile) (bool, error) {
-	err := bcrypt.CompareHashAndPassword([]byte(profile.Password), []byte(credentials.RawPassword + secret))
+	err := bcrypt.CompareHashAndPassword([]byte(profile.Password), []byte(credentials.RawPassword))
 	switch {
 	case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 		return false, nil

@@ -21,8 +21,14 @@ func NewServer(addr string, endpoints *Endpoints) *http.Server {
 		auth.POST("/sign-in", endpoints.Auth.JWTMiddleWare.LoginHandler)
 		auth.GET("/sign-up", endpoints.Auth.RegistrationPage)
 		auth.POST("sign-up", endpoints.Auth.SignUp)
-		auth.POST("/sign-out", endpoints.Auth.JWTMiddleWare.LoginHandler)
+		auth.POST("/sign-out", endpoints.Auth.JWTMiddleWare.LogoutHandler)
 		auth.GET("/refresh-token", endpoints.Auth.JWTMiddleWare.RefreshHandler)
+	}
+
+	profile := router.Group("/profiles")
+	profile.Use(endpoints.Auth.JWTMiddleWare.MiddlewareFunc())
+	{
+		profile.GET("/me", endpoints.Profile.Me)
 	}
 
 	router.GET("/", endpoints.Auth.JWTMiddleWare.MiddlewareFunc(), endpoints.Home)

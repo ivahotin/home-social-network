@@ -20,6 +20,8 @@ window.onload = async () => {
             });
             if (res.ok) {
                 window.location = "/auth/sign-in";
+            } else if (res.status === 400) {
+                e.target.querySelector("#error").innerText = "Such user already exists"
             } else {
                 const { error } = await res.json();
                 if (error) {

@@ -2,7 +2,6 @@ package storage
 
 import (
 	"database/sql"
-	"errors"
 	"example.com/social/internal/domain"
 )
 
@@ -50,7 +49,7 @@ func (authStorage *MySqlAuthStorage) SaveProfile(profile *domain.Profile) error 
 	if rowsAffected > 0 {
 		return nil
 	} else {
-		return errors.New("Such username has already been used")
+		return domain.SuchUsernameExists
 	}
 }
 

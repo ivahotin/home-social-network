@@ -21,3 +21,4 @@ type Profile struct {
 }
 
 var ProfileNotFound = errors.New("profile not found")
+var SuchUsernameExists = errors.New("username already exists")

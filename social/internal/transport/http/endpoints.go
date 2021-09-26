@@ -12,20 +12,27 @@ import (
 )
 
 type Endpoints struct {
-	Home gin.HandlerFunc
-	Auth *AuthEndpoints
+	Home 	gin.HandlerFunc
+	Auth 	*AuthEndpoints
+	Profile *ProfileEndpoints
 }
 
 type AuthEndpoints struct {
-	LoginPage gin.HandlerFunc
-	RegistrationPage gin.HandlerFunc
-	JWTMiddleWare *jwt.GinJWTMiddleware
-	SignUp gin.HandlerFunc
+	LoginPage 			gin.HandlerFunc
+	RegistrationPage 	gin.HandlerFunc
+	JWTMiddleWare 		*jwt.GinJWTMiddleware
+	SignUp 				gin.HandlerFunc
+}
+
+type ProfileEndpoints struct {
+	Me 			gin.HandlerFunc
+	EditProfile gin.HandlerFunc
 }
 
 func MakeEndpoints(
 	signUpUseCase usecases.SignUpUseCase,
-	signInUseCase usecases.SignInUseCase) *Endpoints {
+	signInUseCase usecases.SignInUseCase,
+	getProfileByUsername usecases.GetProfileGetUsernameUseCase) *Endpoints {
 	return &Endpoints{
 		Home: makeHomePage(),
 		Auth: &AuthEndpoints{
@@ -33,6 +40,9 @@ func MakeEndpoints(
 			RegistrationPage: makeRegistrationPage(),
 			JWTMiddleWare: getJwtMiddleware(signInUseCase),
 			SignUp: makeSignUpEndpoint(signUpUseCase),
+		},
+		Profile: &ProfileEndpoints{
+			Me: makeMyProfileEndpoint(getProfileByUsername),
 		},
 	}
 }
@@ -89,7 +99,11 @@ func makeSignUpEndpoint(signUseCase usecases.SignUpUseCase) gin.HandlerFunc {
 		}
 
 		err = signUseCase.SignUp(&profile)
-		if err != nil {
+		switch {
+		case errors.Is(err, domain.SuchUsernameExists):
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		case err != nil:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Something goes wrong"})
 			return
 		}
@@ -127,12 +141,42 @@ func makeSignInEndpoint(signInUseCase usecases.SignInUseCase) func(*gin.Context)
 	}
 }
 
+func makeMyProfileEndpoint(getProfileByUsernameUseCase usecases.GetProfileGetUsernameUseCase) gin.HandlerFunc {
+	return func (ctx *gin.Context) {
+		claims := jwt.ExtractClaims(ctx)
+		username := claims["id"].(string)
+		profile, err := getProfileByUsernameUseCase.GetProfileByUsername(username)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err})
+			return
+		}
+		if profile == nil {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+
+		var gender string
+		switch profile.Gender {
+		case domain.Male: gender = "Male"
+		case domain.Female: gender = "Female"
+		}
+		ctx.JSON(http.StatusFound, gin.H{
+			"firstname": profile.Firstname,
+			"lastname": profile.Lastname,
+			"age": profile.Age,
+			"gender": gender,
+			"city": profile.City,
+			"interests": profile.Interests,
+		})
+	}
+}
+
 func getJwtMiddleware(signInUseCase usecases.SignInUseCase) *jwt.GinJWTMiddleware {
 	const identityKey = "id"
 	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "test zone",
 		Key:         []byte("84636aa7-1b02-47b7-8993-18b1598d8408"),
-		Timeout:     time.Minute,
+		Timeout:     time.Minute * 5,
 		MaxRefresh:  time.Hour,
 		IdentityKey: identityKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
@@ -154,6 +198,10 @@ func getJwtMiddleware(signInUseCase usecases.SignInUseCase) *jwt.GinJWTMiddlewar
 			return true
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
+			if c.FullPath() == "/auth/sign-in" {
+				c.JSON(http.StatusUnauthorized, gin.H{"message": message})
+				return
+			}
 			c.Redirect(http.StatusFound, "/auth/sign-in")
 		},
 		// TokenLookup is a string in the form of "<source>:<name>" that is used
