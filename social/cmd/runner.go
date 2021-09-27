@@ -13,10 +13,10 @@ import (
 
 func main() {
 	db := db2.NewDbPool()
-	authStorage := storage.NewMySqlAuthStorage(db)
-	authService := service.NewAuthService(authStorage)
-	profileService := service.NewProfileService(authStorage)
-	application := app.NewApplication(authService, authService, profileService)
+	profileStorage := storage.NewMySqlProfileStorage(db)
+	authService := service.NewAuthService(profileStorage)
+	profileService := service.NewProfileService(profileStorage)
+	application := app.NewApplication(authService, authService, profileService, profileService)
 
 	go application.Run()
 

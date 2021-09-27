@@ -35,6 +35,7 @@ func NewServer(addr string, endpoints *Endpoints) *http.Server {
 	profile.Use(endpoints.Auth.JWTMiddleWare.MiddlewareFunc())
 	{
 		profile.GET("/me", endpoints.Profile.Me)
+		profile.GET("", endpoints.Profile.SearchProfile)
 	}
 
 	router.GET("/", endpoints.Auth.JWTMiddleWare.MiddlewareFunc(), endpoints.Home)

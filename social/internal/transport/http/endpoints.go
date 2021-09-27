@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -25,14 +26,16 @@ type AuthEndpoints struct {
 }
 
 type ProfileEndpoints struct {
-	Me 			gin.HandlerFunc
-	EditProfile gin.HandlerFunc
+	Me 				gin.HandlerFunc
+	SearchProfile 	gin.HandlerFunc
+	EditProfile 	gin.HandlerFunc
 }
 
 func MakeEndpoints(
 	signUpUseCase usecases.SignUpUseCase,
 	signInUseCase usecases.SignInUseCase,
-	getProfileByUsername usecases.GetProfileGetUsernameUseCase) *Endpoints {
+	getProfileByUsername usecases.GetProfileGetUsernameUseCase,
+	getProfilesBySearchTerm usecases.GetProfilesBySearchTerm) *Endpoints {
 	return &Endpoints{
 		Home: makeHomePage(),
 		Auth: &AuthEndpoints{
@@ -43,6 +46,7 @@ func MakeEndpoints(
 		},
 		Profile: &ProfileEndpoints{
 			Me: makeMyProfileEndpoint(getProfileByUsername),
+			SearchProfile: makeSearchEndpoint(getProfilesBySearchTerm),
 		},
 	}
 }
@@ -125,7 +129,7 @@ func makeSignInEndpoint(signInUseCase usecases.SignInUseCase) func(*gin.Context)
 			return nil, err
 		}
 
-		isMatch, err := signInUseCase.SignIn(credentials)
+		signInResult, err := signInUseCase.SignIn(credentials)
 		switch {
 		case errors.Is(err, domain.ProfileNotFound):
 			return nil, jwt.ErrFailedAuthentication
@@ -133,18 +137,19 @@ func makeSignInEndpoint(signInUseCase usecases.SignInUseCase) func(*gin.Context)
 			return nil, err
 		}
 
-		if !isMatch {
+		if !signInResult.IsMatch {
 			return nil, jwt.ErrFailedAuthentication
 		}
 
-		return &User{ UserName: credentials.Username }, nil
+		ctx.Header("x-user-id", strconv.FormatInt(signInResult.Id, 10))
+		return &User{ UserName: credentials.Username, Id: signInResult.Id }, nil
 	}
 }
 
 func makeMyProfileEndpoint(getProfileByUsernameUseCase usecases.GetProfileGetUsernameUseCase) gin.HandlerFunc {
 	return func (ctx *gin.Context) {
 		claims := jwt.ExtractClaims(ctx)
-		username := claims["id"].(string)
+		username := claims["username"].(string)
 		profile, err := getProfileByUsernameUseCase.GetProfileByUsername(username)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err})
@@ -171,8 +176,55 @@ func makeMyProfileEndpoint(getProfileByUsernameUseCase usecases.GetProfileGetUse
 	}
 }
 
+func makeSearchEndpoint(getProfilesBySearchTerm usecases.GetProfilesBySearchTerm) gin.HandlerFunc {
+	var searchRequest SearchUsersRequest
+	return func (ctx *gin.Context) {
+		if err := ctx.ShouldBind(&searchRequest); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+		claims := jwt.ExtractClaims(ctx)
+		myId := int64(claims["id"].(float64))
+
+		profilesSearchResult, err := getProfilesBySearchTerm.GetProfilesBySearchTerm(
+			searchRequest.SearchTerm,
+			searchRequest.Cursor,
+			searchRequest.Limit,
+			myId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		profiles := make([]*Profile, 0, 32)
+		for _, domainProfile := range profilesSearchResult.Profiles {
+			profile := new(Profile)
+			profile.Id 			= domainProfile.Id
+			profile.Username 	= domainProfile.Username
+			profile.Firstname 	= domainProfile.Firstname
+			profile.Lastname 	= domainProfile.Lastname
+			profile.Age 		= domainProfile.Age
+			profile.City        = domainProfile.City
+			switch domainProfile.Gender {
+			case domain.Male: profile.Gender = "Male"
+			case domain.Female: profile.Gender = "Female"
+			}
+			profile.Interests 	= domainProfile.Interests
+
+			profiles = append(profiles, profile)
+		}
+
+		ctx.JSON(http.StatusOK, GetProfilesBySearchTerm{
+			Profiles: 	profiles,
+			PrevCursor: profilesSearchResult.PrevCursor,
+			NextCursor: profilesSearchResult.NextCursor,
+		})
+	}
+}
+
 func getJwtMiddleware(signInUseCase usecases.SignInUseCase) *jwt.GinJWTMiddleware {
 	const identityKey = "id"
+	const username = "username"
 	middleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "test zone",
 		Key:         []byte("84636aa7-1b02-47b7-8993-18b1598d8408"),
@@ -182,7 +234,8 @@ func getJwtMiddleware(signInUseCase usecases.SignInUseCase) *jwt.GinJWTMiddlewar
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(*User); ok {
 				return jwt.MapClaims{
-					identityKey: v.UserName,
+					username: v.UserName,
+					identityKey: v.Id,
 				}
 			}
 			return jwt.MapClaims{}
@@ -190,7 +243,8 @@ func getJwtMiddleware(signInUseCase usecases.SignInUseCase) *jwt.GinJWTMiddlewar
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
 			return &User{
-				UserName: claims[identityKey].(string),
+				UserName: claims[username].(string),
+				Id: int64(claims[identityKey].(float64)),
 			}
 		},
 		Authenticator: makeSignInEndpoint(signInUseCase),

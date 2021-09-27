@@ -17,10 +17,16 @@ type Application struct {
 func NewApplication(
 	signUpUseCase usecases.SignUpUseCase,
 	signInUseCase usecases.SignInUseCase,
-	getProfileByUsername usecases.GetProfileGetUsernameUseCase) *Application {
+	getProfileByUsername usecases.GetProfileGetUsernameUseCase,
+	getProfilesBySearchTerm usecases.GetProfilesBySearchTerm) *Application {
 	return &Application{
 		transport.NewServer(
-			":8080", transport.MakeEndpoints(signUpUseCase, signInUseCase, getProfileByUsername)),
+			":8080",
+			transport.MakeEndpoints(
+				signUpUseCase,
+				signInUseCase,
+				getProfileByUsername,
+				getProfilesBySearchTerm)),
 	}
 }
 

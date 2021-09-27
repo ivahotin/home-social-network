@@ -7,5 +7,5 @@ type SignUpUseCase interface {
 }
 
 type SignInUseCase interface {
-	SignIn(credentials *domain.Credentials) (bool, error)
+	SignIn(credentials *domain.Credentials) (*domain.SignInResult, error)
 }

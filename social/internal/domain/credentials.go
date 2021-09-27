@@ -35,3 +35,8 @@ func (credentials *Credentials) CheckPassword(profile *Profile) (bool, error) {
 
 	return true, nil
 }
+
+type SignInResult struct {
+	IsMatch  bool
+	Id       int64
+}

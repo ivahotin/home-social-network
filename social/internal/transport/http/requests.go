@@ -15,3 +15,9 @@ type SignUpRequest struct {
 	Interests 	string 	`form:"interests" json:"interests" binding:"required"`
 	City 		string 	`form:"city" json:"city" binding:"required"`
 }
+
+type SearchUsersRequest struct {
+	SearchTerm	string  `form:"term" binding:"required"`
+	Cursor      int64	`form:"cursor,default=0"`
+	Limit       int     `form:"limit" binding:"required,min=5,max=100"`
+}

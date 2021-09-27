@@ -23,20 +23,20 @@ func (authService *AuthService) SignUp(profile *domain.Profile) error {
 	return nil
 }
 
-func (authService *AuthService) SignIn(credentials *domain.Credentials) (bool, error) {
+func (authService *AuthService) SignIn(credentials *domain.Credentials) (*domain.SignInResult, error) {
 	profile, err := authService.Storage.GetProfileByUsername(credentials.Username)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	if profile == nil {
-		return false, domain.ProfileNotFound
+		return nil, domain.ProfileNotFound
 	}
 
 	isMatch, err := credentials.CheckPassword(profile)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return isMatch, nil
+	return &domain.SignInResult{IsMatch: isMatch, Id: profile.Id}, nil
 }
