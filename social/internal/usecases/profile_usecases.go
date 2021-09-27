@@ -13,3 +13,7 @@ type GetProfilesBySearchTerm interface {
 type GetProfilesByUserIdsQuery interface {
 	GetProfilesByUserIds(userIds []int64) ([]*domain.Profile, error)
 }
+
+type GetProfileByUserIdQuery interface {
+	GetProfileByUserId(userId int64) (*domain.Profile, error)
+}

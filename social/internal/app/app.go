@@ -22,7 +22,8 @@ func NewApplication(
 	followUserCase usecases.FollowUseCase,
 	getFollowingByUserIdQuery usecases.GetFollowingByUserIdQuery,
 	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery,
-	unfollowUseCase usecases.UnFollowUseCase) *Application {
+	unfollowUseCase usecases.UnFollowUseCase,
+	getUserProfileByUserIdQuery usecases.GetProfileByUserIdQuery) *Application {
 	return &Application{
 		transport.NewServer(
 			":8080",
@@ -34,7 +35,8 @@ func NewApplication(
 				followUserCase,
 				getFollowingByUserIdQuery,
 				getProfilesByUserIdsQuery,
-				unfollowUseCase)),
+				unfollowUseCase,
+				getUserProfileByUserIdQuery)),
 	}
 }
 

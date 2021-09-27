@@ -11,6 +11,7 @@ const (
 	getProfileByUsernameStmt = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where username = ?"
 	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where (firstname like ? or lastname like ?) and id > ? order by id asc limit ?"
 	getProfilesByUserIds = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where id in "
+	getProfileByUserId = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where id = ?"
 )
 
 type MySqlProfileStorage struct {
@@ -44,7 +45,7 @@ func (profileStorage *MySqlProfileStorage) GetProfileByUsername(username string)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, err
 		}
 		return nil, err
 	}
@@ -173,4 +174,33 @@ func (profileStorage *MySqlProfileStorage) GetProfilesByIds(userIds []int64) ([]
 	}
 
 	return profiles, nil
+}
+
+func (profileStorage *MySqlProfileStorage) GetProfileByUserId(userId int64) (*domain.Profile, error) {
+	stmt, err := profileStorage.db.Prepare(getProfileByUserId)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	var profile domain.Profile
+	err = stmt.QueryRow(userId).Scan(
+		&profile.Id,
+		&profile.Username,
+		&profile.Password,
+		&profile.Firstname,
+		&profile.Lastname,
+		&profile.Age,
+		&profile.Gender,
+		&profile.Interests,
+		&profile.City)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return &profile, nil
 }

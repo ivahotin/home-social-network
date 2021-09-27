@@ -29,6 +29,10 @@ type MeProfileResponse struct {
 	Following   []*Profile  `json:"following"`
 }
 
+type GetProfileByUserIdResponse struct {
+	Profile     *Profile    `json:"profile"`
+}
+
 func ConvertDomainProfileToResponseProfile(domainProfile *domain.Profile) *Profile {
 	profile 			:= 	new(Profile)
 	profile.Id 			= 	domainProfile.Id

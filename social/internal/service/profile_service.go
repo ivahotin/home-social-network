@@ -29,3 +29,7 @@ func (profileService *ProfileService) GetProfilesBySearchTerm(term string, curso
 func (profileService *ProfileService) GetProfilesByUserIds(userIds []int64) ([]*domain.Profile, error) {
 	return profileService.ProfileStorage.GetProfilesByIds(userIds)
 }
+
+func (profileService *ProfileService) GetProfileByUserId(userId int64) (*domain.Profile, error) {
+	return profileService.ProfileStorage.GetProfileByUserId(userId)
+}

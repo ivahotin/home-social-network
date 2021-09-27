@@ -26,7 +26,8 @@ func main() {
 		followerService,
 		followerService,
 		profileService,
-		followerService)
+		followerService,
+		profileService)
 
 	go application.Run()
 

@@ -29,3 +29,7 @@ type FollowRequest struct {
 type UnfollowRequest struct {
 	FollowedId    int64   `uri:"followed" binding:"required"`
 }
+
+type GetProfileByIdRequest struct {
+	UserId        int64   `uri:"id" binding:"required"`
+}

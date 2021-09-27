@@ -28,6 +28,7 @@ type AuthEndpoints struct {
 
 type ProfileEndpoints struct {
 	Me 				gin.HandlerFunc
+	GetProfile      gin.HandlerFunc
 	SearchProfile 	gin.HandlerFunc
 	EditProfile 	gin.HandlerFunc
 }
@@ -45,7 +46,8 @@ func MakeEndpoints(
 	followUseCase usecases.FollowUseCase,
 	getFriendsByUserIdQuery usecases.GetFollowingByUserIdQuery,
 	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery,
-	unfollowUseCase usecases.UnFollowUseCase) *Endpoints {
+	unfollowUseCase usecases.UnFollowUseCase,
+	getProfileQuery usecases.GetProfileByUserIdQuery) *Endpoints {
 	return &Endpoints{
 		Home: makeHomePage(),
 		Auth: &AuthEndpoints{
@@ -57,6 +59,7 @@ func MakeEndpoints(
 		Profile: &ProfileEndpoints{
 			Me: makeMyProfileEndpoint(getProfileByUsername, getFriendsByUserIdQuery, getProfilesByUserIdsQuery),
 			SearchProfile: makeSearchEndpoint(getProfilesBySearchTerm),
+			GetProfile: makeGetProfileEndpoint(getProfileQuery),
 		},
 		Following: &FollowingEndpoints{
 			Follow: makeFollowEndpoint(followUseCase),
@@ -195,6 +198,31 @@ func makeMyProfileEndpoint(
 		ctx.JSON(http.StatusOK, MeProfileResponse{
 			Profile: ConvertDomainProfileToResponseProfile(profile),
 			Following: friendsProfiles,
+		})
+	}
+}
+
+func makeGetProfileEndpoint(getProfileQuery usecases.GetProfileByUserIdQuery) gin.HandlerFunc {
+	var req GetProfileByIdRequest
+	return func(ctx *gin.Context) {
+		if err := ctx.ShouldBindUri(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+
+		profile, err := getProfileQuery.GetProfileByUserId(req.UserId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error})
+			return
+		}
+
+		if profile == nil {
+			ctx.Status(http.StatusNotFound)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, GetProfileByUserIdResponse{
+			Profile: ConvertDomainProfileToResponseProfile(profile),
 		})
 	}
 }

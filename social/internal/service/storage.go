@@ -7,6 +7,7 @@ type ProfileStorage interface {
 	GetProfileByUsername(username string) (*domain.Profile, error)
 	GetProfilesBySearchTerm(term string, offset int64, limit int) ([]*domain.Profile, error)
 	GetProfilesByIds(userIds []int64) ([]*domain.Profile, error)
+	GetProfileByUserId(userId int64) (*domain.Profile, error)
 }
 
 type FollowersStorage interface {

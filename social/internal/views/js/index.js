@@ -1,9 +1,54 @@
 window.onload = async () => {
 
+    let renderFollowingList = (following) => {
+        let renderFriend = (profile) => {
+            let profileString = `
+                <tr id="followed-${profile.id}">
+                    <td>${profile.firstname}</td>
+                    <td>${profile.lastname}</td>
+                    <td>${profile.age}</td>
+                    <td>${profile.city}</td>
+                    <td><button type="button" class="btn btn-success" id="unfollow-btn-${profile.id}" data-pk="${profile.id}">Unfollow</button></td>
+                </tr>`;
+            $("tbody#following").append(profileString);
+            document.querySelector(`button#unfollow-btn-${profile.id}`).addEventListener("click", unfollowBtnHandler);
+        }
+        $("tbody#following").empty();
+        following.forEach(renderFriend)
+    };
+
+    let renderProfilePage = (profile, following) => {
+        let myUsername = window.localStorage.getItem("username");
+        let isMe = profile.username === myUsername;
+
+        $("div#profile-id").text(profile.id);
+        $("div#first-name").text(profile.firstname);
+        $("div#last-name").text(profile.lastname);
+        $("div#age").text(profile.age);
+        $("div#gender").text(profile.gender);
+        $("div#city").text(profile.city);
+        $("div#interests").text(profile.interests);
+        $("h4#full-name").text(profile.firstname + ' ' + profile.lastname);
+
+        if (isMe) {
+            if (following.length > 0) {
+                renderFollowingList(following);
+            }
+            $("main#following-table").show();
+            $("button#follow-btn").hide();
+            $("button#message-btn").hide();
+        } else {
+            $("main#following-table").hide();
+            $("button#follow-btn").disabled = false;
+            $("button#follow-btn").show();
+            $("button#message-btn").show();
+        }
+    };
+
     let followBtnHandler = async (e) => {
         e.preventDefault()
-        let followed = e.target.attributes["data-pk"].value;
-        const res = await fetch(`/following/${followed}/follow`, {
+        let followed = $("div#profile-id").text();
+        let res = await fetch(`/following/${followed}/follow`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -11,7 +56,7 @@ window.onload = async () => {
         });
 
         if (res.ok) {
-            e.target.disabled = true;
+            showMeContainer(null);
         }
     };
 
@@ -41,61 +86,55 @@ window.onload = async () => {
 
     let showSearchContainer = async (e) => {
         document.getElementById("search-container").style.display = "block";
-        document.getElementById("me-container").style.display = "none";
+        document.getElementById("profile-container").style.display = "none";
     };
 
     let showMeContainer = async (e) => {
         document.getElementById("search-container").style.display = "none";
-        document.getElementById("me-container").style.display = "block";
+        document.getElementById("profile-container").style.display = "block";
 
         const res = await fetch("/profiles/me", {
             method: "GET",
-            "headers": {
+            headers: {
                 "Content-Type": "application/json",
             }
         });
 
         if (res.ok) {
             let data = await res.json()
-            $("td#first-name").text(data.profile.firstname)
-            $("td#last-name").text(data.profile.lastname)
-            $("td#age").text(data.profile.age)
-            $("td#gender").text(data.profile.gender)
-            $("td#city").text(data.profile.city)
-            $("td#interests").text(data.profile.interests)
+            renderProfilePage(data.profile, data.following);
+        }
+    };
 
-            let renderFriend = (profile) => {
-                let profileString = `
-                    <tr id="followed-${profile.id}">
-                        <td>${profile.firstname}</td>
-                        <td>${profile.lastname}</td>
-                        <td>${profile.age}</td>
-                        <td>${profile.city}</td>
-                        <td><button type="button" class="btn btn-success" id="unfollow-btn-${profile.id}" data-pk="${profile.id}">Unfollow</button></td>
-                    </tr>`;
-
-                $("tbody#following").append(profileString);
-
-                document.querySelector(`button#unfollow-btn-${profile.id}`).addEventListener("click", unfollowBtnHandler);
+    let showUserProfile = async (e) => {
+        let profileId = e.target.attributes["data-pk"].value;
+        const res = await fetch(`/profiles/${profileId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
             }
+        });
 
-            $("tbody#following").empty();
-            data.following.forEach(renderFriend)
+        if (res.ok) {
+            let data = await res.json()
+            renderProfilePage(data.profile, []);
+            document.getElementById("search-container").style.display = "none";
+            document.getElementById("profile-container").style.display = "block";
         }
     };
 
     let showProfile = (profile) => {
         let profileString = `
-            <tr>
+            <tr class='clickable-row'>
                 <td>${profile.firstname}</td>
                 <td>${profile.lastname}</td>
                 <td>${profile.age}</td>
                 <td>${profile.city}</td>
-                <td><button type="button" class="btn btn-success" id="follow-btn-${profile.id}" data-pk="${profile.id}">Follow</button></td>
+                <td><button type="button" class="btn btn-success" id="profile-btn-${profile.id}" data-pk="${profile.id}">Link</button></td>
             </tr>`;
         $("tbody#profiles").append(profileString);
 
-        document.querySelector(`button#follow-btn-${profile.id}`).addEventListener("click", followBtnHandler);
+        document.querySelector(`button#profile-btn-${profile.id}`).addEventListener("click", showUserProfile);
     }
 
     let searchForPersons = async (term, cursor) => {
@@ -133,6 +172,7 @@ window.onload = async () => {
 
     let searchBtnHandler = async (e) => {
         e.preventDefault();
+        $("button#prev").hide();
         let searchTerm = e.target.querySelector("#search-field").value;
         window.localStorage.setItem("currentTerm", searchTerm);
         await searchForPersons(searchTerm, 0);
@@ -163,11 +203,11 @@ window.onload = async () => {
     };
 
     await showMeContainer(null);
-    $("button#prev").hide();
     document.querySelector("a#logout").addEventListener("click", logout);
     document.querySelector("a#me-profile").addEventListener("click", showMeContainer);
     document.querySelector("form#search-form").addEventListener("submit", searchBtnHandler);
     document.querySelector("#search-field").addEventListener("input", searchTypeHandler);
     document.querySelector("button#next").addEventListener("click", nextBtnClick);
     document.querySelector("button#prev").addEventListener("click", prevBtnClick);
+    document.querySelector("button#follow-btn").addEventListener("click", followBtnHandler);
 };
