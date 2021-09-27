@@ -160,7 +160,7 @@ func makeMyProfileEndpoint(getProfileByUsernameUseCase usecases.GetProfileGetUse
 		case domain.Male: gender = "Male"
 		case domain.Female: gender = "Female"
 		}
-		ctx.JSON(http.StatusFound, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"firstname": profile.Firstname,
 			"lastname": profile.Lastname,
 			"age": profile.Age,

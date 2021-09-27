@@ -25,7 +25,12 @@ let showMeContainer = async (e) => {
 
     if (res.ok) {
         let data = await res.json()
-        console.log(data)
+        $("td#first-name").text(data.firstname)
+        $("td#last-name").text(data.lastname)
+        $("td#age").text(data.age)
+        $("td#gender").text(data.gender)
+        $("td#city").text(data.city)
+        $("td#interests").text(data.interests)
     }
 };
 

@@ -14,6 +14,12 @@ func NewServer(addr string, endpoints *Endpoints) *http.Server {
 
 	router.Use(static.Serve("/js", static.LocalFile("./social/internal/views/js", true)))
 	router.Use(static.Serve("/css", static.LocalFile("./social/internal/views/css", true)))
+	router.Use(
+		static.Serve(
+			"/favicon.ico",
+			static.LocalFile("./social/internal/views/images/favicon.ico", true),
+			),
+		)
 
 	auth := router.Group("/auth")
 	{

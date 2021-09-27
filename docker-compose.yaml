@@ -5,6 +5,8 @@ services:
         image: mysql:8.0
         restart: always
         container_name: social-db
+        volumes:
+            - mysql-db:/var/lib/mysql
         env_file: 
             - .local.env
         environment: 
@@ -32,4 +34,4 @@ networks:
         driver: bridge
 
 volumes:
-    db:
+    mysql-db:
