@@ -1,6 +1,7 @@
-create table if not exists friends (
-    id           serial primary key,
-    user_id      int not null,
-    friend_id    int not null,
-    unique key   first_user_id_second_user_id (first_user_id, second_user_id)
-);
+create table if not exists followers (
+    follower_id     bigint not null,
+    user_id         bigint not null,
+    is_active       boolean not null,
+    created_at      timestamp default current_timestamp(),
+    primary key (follower_id, user_id)
+) engine = InnoDB;

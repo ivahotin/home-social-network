@@ -38,6 +38,13 @@ func NewServer(addr string, endpoints *Endpoints) *http.Server {
 		profile.GET("", endpoints.Profile.SearchProfile)
 	}
 
+	following := router.Group("/following")
+	following.Use(endpoints.Auth.JWTMiddleWare.MiddlewareFunc())
+	{
+		following.POST("/:followed/follow", endpoints.Following.Follow)
+		following.POST("/:followed/unfollow", endpoints.Following.UnFollow)
+	}
+
 	router.GET("/", endpoints.Auth.JWTMiddleWare.MiddlewareFunc(), endpoints.Home)
 	router.GET("/health-check", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{})

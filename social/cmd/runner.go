@@ -16,7 +16,17 @@ func main() {
 	profileStorage := storage.NewMySqlProfileStorage(db)
 	authService := service.NewAuthService(profileStorage)
 	profileService := service.NewProfileService(profileStorage)
-	application := app.NewApplication(authService, authService, profileService, profileService)
+	followerStorage := storage.NewMysqlFollowerStorage(db)
+	followerService := service.NewFriendshipService(followerStorage)
+	application := app.NewApplication(
+		authService,
+		authService,
+		profileService,
+		profileService,
+		followerService,
+		followerService,
+		profileService,
+		followerService)
 
 	go application.Run()
 

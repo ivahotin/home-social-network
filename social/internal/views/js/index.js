@@ -1,5 +1,35 @@
 window.onload = async () => {
 
+    let followBtnHandler = async (e) => {
+        e.preventDefault()
+        let followed = e.target.attributes["data-pk"].value;
+        const res = await fetch(`/following/${followed}/follow`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (res.ok) {
+            e.target.disabled = true;
+        }
+    };
+
+    let unfollowBtnHandler = async (e) => {
+        e.preventDefault()
+        let followed = e.target.attributes["data-pk"].value;
+        const res = await fetch(`/following/${followed}/unfollow`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (res.ok) {
+            document.querySelector(`tr#followed-${followed}`).remove()
+        }
+    }
+
     let logout = async (e) => {
         e.preventDefault();
         window.localStorage.removeItem("username");
@@ -27,12 +57,30 @@ window.onload = async () => {
 
         if (res.ok) {
             let data = await res.json()
-            $("td#first-name").text(data.firstname)
-            $("td#last-name").text(data.lastname)
-            $("td#age").text(data.age)
-            $("td#gender").text(data.gender)
-            $("td#city").text(data.city)
-            $("td#interests").text(data.interests)
+            $("td#first-name").text(data.profile.firstname)
+            $("td#last-name").text(data.profile.lastname)
+            $("td#age").text(data.profile.age)
+            $("td#gender").text(data.profile.gender)
+            $("td#city").text(data.profile.city)
+            $("td#interests").text(data.profile.interests)
+
+            let renderFriend = (profile) => {
+                let profileString = `
+                    <tr id="followed-${profile.id}">
+                        <td>${profile.firstname}</td>
+                        <td>${profile.lastname}</td>
+                        <td>${profile.age}</td>
+                        <td>${profile.city}</td>
+                        <td><button type="button" class="btn btn-success" id="unfollow-btn-${profile.id}" data-pk="${profile.id}">Unfollow</button></td>
+                    </tr>`;
+
+                $("tbody#following").append(profileString);
+
+                document.querySelector(`button#unfollow-btn-${profile.id}`).addEventListener("click", unfollowBtnHandler);
+            }
+
+            $("tbody#following").empty();
+            data.following.forEach(renderFriend)
         }
     };
 
@@ -43,9 +91,11 @@ window.onload = async () => {
                 <td>${profile.lastname}</td>
                 <td>${profile.age}</td>
                 <td>${profile.city}</td>
-            </tr>
-        `;
+                <td><button type="button" class="btn btn-success" id="follow-btn-${profile.id}" data-pk="${profile.id}">Follow</button></td>
+            </tr>`;
         $("tbody#profiles").append(profileString);
+
+        document.querySelector(`button#follow-btn-${profile.id}`).addEventListener("click", followBtnHandler);
     }
 
     let searchForPersons = async (term, cursor) => {
@@ -60,19 +110,18 @@ window.onload = async () => {
             let profiles = body.profiles;
             let nextCursor = body.next_cursor;
             let prevCursor = body.prev_cursor;
-            window.localStorage.setItem("prev_cursor", prevCursor - 1);
-            window.localStorage.setItem("next_cursor", nextCursor);
+            if (profiles.length != 0) {
+                window.localStorage.setItem("prev_cursor", prevCursor);
+                window.localStorage.setItem("next_cursor", nextCursor);
+                $("button#next").show();
+            } else {
+                $("button#next").hide();
+            }
 
             $("tbody#profiles").empty();
             profiles.forEach(showProfile);
 
-            if (profiles.empty || nextCursor == 0) {
-                $("button#next").hide();
-            } else {
-                $("button#next").show();
-            }
-
-            if (prevCursor <= 0) {
+            if (prevCursor == 0) {
                 $("button#prev").hide();
             } else {
                 $("button#prev").show();
@@ -113,9 +162,7 @@ window.onload = async () => {
         }
     };
 
-    await showMeContainer(null)
-    window.localStorage.setItem("prev_cursor", 0);
-    window.localStorage.setItem("next_cursor", 0);
+    await showMeContainer(null);
     $("button#prev").hide();
     document.querySelector("a#logout").addEventListener("click", logout);
     document.querySelector("a#me-profile").addEventListener("click", showMeContainer);

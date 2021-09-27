@@ -21,3 +21,11 @@ type SearchUsersRequest struct {
 	Cursor      int64	`form:"cursor,default=0"`
 	Limit       int     `form:"limit" binding:"required,min=5,max=100"`
 }
+
+type FollowRequest struct {
+	FollowedId    int64   `uri:"followed" binding:"required"`
+}
+
+type UnfollowRequest struct {
+	FollowedId    int64   `uri:"followed" binding:"required"`
+}

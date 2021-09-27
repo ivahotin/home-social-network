@@ -13,9 +13,10 @@ import (
 )
 
 type Endpoints struct {
-	Home 	gin.HandlerFunc
-	Auth 	*AuthEndpoints
-	Profile *ProfileEndpoints
+	Home 		gin.HandlerFunc
+	Auth 		*AuthEndpoints
+	Profile 	*ProfileEndpoints
+	Following  	*FollowingEndpoints
 }
 
 type AuthEndpoints struct {
@@ -31,11 +32,20 @@ type ProfileEndpoints struct {
 	EditProfile 	gin.HandlerFunc
 }
 
+type FollowingEndpoints struct {
+	Follow      gin.HandlerFunc
+	UnFollow    gin.HandlerFunc
+}
+
 func MakeEndpoints(
 	signUpUseCase usecases.SignUpUseCase,
 	signInUseCase usecases.SignInUseCase,
 	getProfileByUsername usecases.GetProfileGetUsernameUseCase,
-	getProfilesBySearchTerm usecases.GetProfilesBySearchTerm) *Endpoints {
+	getProfilesBySearchTerm usecases.GetProfilesBySearchTerm,
+	followUseCase usecases.FollowUseCase,
+	getFriendsByUserIdQuery usecases.GetFollowingByUserIdQuery,
+	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery,
+	unfollowUseCase usecases.UnFollowUseCase) *Endpoints {
 	return &Endpoints{
 		Home: makeHomePage(),
 		Auth: &AuthEndpoints{
@@ -45,8 +55,12 @@ func MakeEndpoints(
 			SignUp: makeSignUpEndpoint(signUpUseCase),
 		},
 		Profile: &ProfileEndpoints{
-			Me: makeMyProfileEndpoint(getProfileByUsername),
+			Me: makeMyProfileEndpoint(getProfileByUsername, getFriendsByUserIdQuery, getProfilesByUserIdsQuery),
 			SearchProfile: makeSearchEndpoint(getProfilesBySearchTerm),
+		},
+		Following: &FollowingEndpoints{
+			Follow: makeFollowEndpoint(followUseCase),
+			UnFollow: makeUnFollowEndpoint(unfollowUseCase),
 		},
 	}
 }
@@ -146,13 +160,16 @@ func makeSignInEndpoint(signInUseCase usecases.SignInUseCase) func(*gin.Context)
 	}
 }
 
-func makeMyProfileEndpoint(getProfileByUsernameUseCase usecases.GetProfileGetUsernameUseCase) gin.HandlerFunc {
+func makeMyProfileEndpoint(
+	getProfileByUsernameUseCase usecases.GetProfileGetUsernameUseCase,
+	getFriendsIdsByUserIdQuery usecases.GetFollowingByUserIdQuery,
+	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery) gin.HandlerFunc {
 	return func (ctx *gin.Context) {
 		claims := jwt.ExtractClaims(ctx)
 		username := claims["username"].(string)
 		profile, err := getProfileByUsernameUseCase.GetProfileByUsername(username)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err})
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error})
 			return
 		}
 		if profile == nil {
@@ -160,18 +177,24 @@ func makeMyProfileEndpoint(getProfileByUsernameUseCase usecases.GetProfileGetUse
 			return
 		}
 
-		var gender string
-		switch profile.Gender {
-		case domain.Male: gender = "Male"
-		case domain.Female: gender = "Female"
+		friendsIds, err := getFriendsIdsByUserIdQuery.GetFollowingByUserId(profile.Id)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
 		}
-		ctx.JSON(http.StatusOK, gin.H{
-			"firstname": profile.Firstname,
-			"lastname": profile.Lastname,
-			"age": profile.Age,
-			"gender": gender,
-			"city": profile.City,
-			"interests": profile.Interests,
+		domainFriendsProfiles, err := getProfilesByUserIdsQuery.GetProfilesByUserIds(friendsIds)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+		friendsProfiles := make([]*Profile, 0, 0)
+		for _, domainProfile := range domainFriendsProfiles {
+			friendsProfiles = append(friendsProfiles, ConvertDomainProfileToResponseProfile(domainProfile))
+		}
+
+		ctx.JSON(http.StatusOK, MeProfileResponse{
+			Profile: ConvertDomainProfileToResponseProfile(profile),
+			Following: friendsProfiles,
 		})
 	}
 }
@@ -198,20 +221,7 @@ func makeSearchEndpoint(getProfilesBySearchTerm usecases.GetProfilesBySearchTerm
 
 		profiles := make([]*Profile, 0, 32)
 		for _, domainProfile := range profilesSearchResult.Profiles {
-			profile := new(Profile)
-			profile.Id 			= domainProfile.Id
-			profile.Username 	= domainProfile.Username
-			profile.Firstname 	= domainProfile.Firstname
-			profile.Lastname 	= domainProfile.Lastname
-			profile.Age 		= domainProfile.Age
-			profile.City        = domainProfile.City
-			switch domainProfile.Gender {
-			case domain.Male: profile.Gender = "Male"
-			case domain.Female: profile.Gender = "Female"
-			}
-			profile.Interests 	= domainProfile.Interests
-
-			profiles = append(profiles, profile)
+			profiles = append(profiles, ConvertDomainProfileToResponseProfile(domainProfile))
 		}
 
 		ctx.JSON(http.StatusOK, GetProfilesBySearchTerm{
@@ -219,6 +229,44 @@ func makeSearchEndpoint(getProfilesBySearchTerm usecases.GetProfilesBySearchTerm
 			PrevCursor: profilesSearchResult.PrevCursor,
 			NextCursor: profilesSearchResult.NextCursor,
 		})
+	}
+}
+
+func makeFollowEndpoint(followUseCase usecases.FollowUseCase) gin.HandlerFunc {
+	var req FollowRequest
+	return func(ctx *gin.Context) {
+		if err := ctx.ShouldBindUri(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+		claims := jwt.ExtractClaims(ctx)
+		myId := int64(claims["id"].(float64))
+
+		if err := followUseCase.Follow(myId, req.FollowedId); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		ctx.Status(http.StatusOK)
+	}
+}
+
+func makeUnFollowEndpoint(unfollowUseCase usecases.UnFollowUseCase) gin.HandlerFunc {
+	var req UnfollowRequest
+	return func(ctx *gin.Context) {
+		if err := ctx.ShouldBindUri(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+		claims := jwt.ExtractClaims(ctx)
+		myId := int64(claims["id"].(float64))
+
+		if err := unfollowUseCase.Unfollow(myId, req.FollowedId); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		ctx.Status(http.StatusOK)
 	}
 }
 

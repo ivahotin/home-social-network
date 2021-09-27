@@ -1,5 +1,7 @@
 package http
 
+import "example.com/social/internal/domain"
+
 type User struct {
 	Id        int64
 	UserName  string
@@ -20,4 +22,26 @@ type GetProfilesBySearchTerm struct {
 	Profiles  	[]*Profile	`json:"profiles"`
 	PrevCursor 	int64      	`json:"prev_cursor"`
 	NextCursor 	int64      	`json:"next_cursor"`
+}
+
+type MeProfileResponse struct {
+	Profile   	*Profile    `json:"profile"`
+	Following   []*Profile  `json:"following"`
+}
+
+func ConvertDomainProfileToResponseProfile(domainProfile *domain.Profile) *Profile {
+	profile 			:= 	new(Profile)
+	profile.Id 			= 	domainProfile.Id
+	profile.Username 	= 	domainProfile.Username
+	profile.Firstname 	= 	domainProfile.Firstname
+	profile.Lastname 	=	domainProfile.Lastname
+	profile.Age 		= 	domainProfile.Age
+	profile.City        = 	domainProfile.City
+	switch domainProfile.Gender {
+	case domain.Male: profile.Gender = "Male"
+	case domain.Female: profile.Gender = "Female"
+	}
+	profile.Interests 	= domainProfile.Interests
+
+	return profile
 }

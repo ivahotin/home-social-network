@@ -18,7 +18,11 @@ func NewApplication(
 	signUpUseCase usecases.SignUpUseCase,
 	signInUseCase usecases.SignInUseCase,
 	getProfileByUsername usecases.GetProfileGetUsernameUseCase,
-	getProfilesBySearchTerm usecases.GetProfilesBySearchTerm) *Application {
+	getProfilesBySearchTerm usecases.GetProfilesBySearchTerm,
+	followUserCase usecases.FollowUseCase,
+	getFollowingByUserIdQuery usecases.GetFollowingByUserIdQuery,
+	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery,
+	unfollowUseCase usecases.UnFollowUseCase) *Application {
 	return &Application{
 		transport.NewServer(
 			":8080",
@@ -26,7 +30,11 @@ func NewApplication(
 				signUpUseCase,
 				signInUseCase,
 				getProfileByUsername,
-				getProfilesBySearchTerm)),
+				getProfilesBySearchTerm,
+				followUserCase,
+				getFollowingByUserIdQuery,
+				getProfilesByUserIdsQuery,
+				unfollowUseCase)),
 	}
 }
 

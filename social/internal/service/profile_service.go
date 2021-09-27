@@ -25,3 +25,7 @@ func (profileService *ProfileService) GetProfilesBySearchTerm(term string, curso
 	profilesSearchResult := domain.NewProfilesSearchResult(profiles, cursor, myId)
 	return profilesSearchResult, nil
 }
+
+func (profileService *ProfileService) GetProfilesByUserIds(userIds []int64) ([]*domain.Profile, error) {
+	return profileService.ProfileStorage.GetProfilesByIds(userIds)
+}

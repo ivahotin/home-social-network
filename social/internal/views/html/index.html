@@ -40,6 +40,7 @@
                     <th scope="col">Last name</th>
                     <th scope="col">Age</th>
                     <th scope="col">City</th>
+                    <th scope="col"></th>
                 </tr>
             </thead>
         <tbody id="profiles">
@@ -92,13 +93,21 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-2">
-            <button id="follow"
-                    class="btn btn-lg btn-block"
-                    type="button"
-                    onclick="follow()"
-                    style="display: none;">Follow</button>
-        </div>
+        <main class="container">
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                <tr>
+                    <th scope="col">First name</th>
+                    <th scope="col">Last name</th>
+                    <th scope="col">Age</th>
+                    <th scope="col">City</th>
+                    <th scope="col"></th>
+                </tr>
+                </thead>
+                <tbody id="following">
+                </tbody>
+            </table>
+        </main>
     </div>
 </main>
 
