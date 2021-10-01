@@ -6,4 +6,4 @@ build:
     social: social/Dockerfile
 
 run:
-  web: ./httpserver
+  social: ./httpserver
