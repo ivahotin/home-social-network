@@ -11,7 +11,6 @@ FROM heroku/heroku:16 AS production
 WORKDIR /
 COPY --from=build /app/httpserver /httpserver
 COPY --from=build /app/views      /views
-EXPOSE 8000
 USER nonroot:nonroot
 
 CMD ["/httpserver"]
