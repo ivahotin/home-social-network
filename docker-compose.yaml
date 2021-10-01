@@ -18,17 +18,17 @@ services:
             - social-net
         ports:
             - "3306:3306"
-    # social:
-    #     build: ./social
-    #     container_name: social-network
-    #     env_file: 
-    #         - .local.env
-    #     ports: 
-    #         - "8000:8000"
-    #     depends_on: 
-    #         - db
-    #     networks: 
-    #         - mynet
+    social:
+         build: ./social
+         container_name: social-network
+         env_file:
+             - .local.env
+         ports:
+             - "8080:8080"
+         depends_on:
+             - db
+         networks:
+             - social-net
 networks:
     social-net:
         driver: bridge

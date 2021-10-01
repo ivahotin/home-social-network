@@ -40,11 +40,11 @@ func NewDbPool() *sql.DB {
 	db.SetMaxOpenConns(maxOpenConn)
 	db.SetMaxIdleConns(maxIdleConn)
 
-	err = db.Ping()
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Couldn't ping database: %s", err)
-		os.Exit(1)
-	}
+	//err = db.Ping()
+	//if err != nil {
+	//	_, _ = fmt.Fprintf(os.Stderr, "Couldn't ping database: %s", err)
+	//	os.Exit(1)
+	//}
 
 	return db
 }

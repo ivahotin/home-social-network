@@ -10,14 +10,14 @@ func NewServer(addr string, endpoints *Endpoints) *http.Server {
 	//gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	router.LoadHTMLGlob("./social/internal/views/html/*.html")
+	router.LoadHTMLGlob("./views/html/*.html")
 
-	router.Use(static.Serve("/js", static.LocalFile("./social/internal/views/js", true)))
-	router.Use(static.Serve("/css", static.LocalFile("./social/internal/views/css", true)))
+	router.Use(static.Serve("/js", static.LocalFile("./views/js", true)))
+	router.Use(static.Serve("/css", static.LocalFile("./views/css", true)))
 	router.Use(
 		static.Serve(
 			"/favicon.ico",
-			static.LocalFile("./social/internal/views/images/favicon.ico", true),
+			static.LocalFile("./views/images/favicon.ico", true),
 			),
 		)
 
