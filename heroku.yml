@@ -1,0 +1,5 @@
+build:
+  docker:
+    social: social/Dockerfile
+run:
+  web: ./httpserver
