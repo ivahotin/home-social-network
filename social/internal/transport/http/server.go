@@ -7,7 +7,7 @@ import (
 )
 
 func NewServer(addr string, endpoints *Endpoints) *http.Server {
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
 	router.LoadHTMLGlob("./views/html/*.html")
