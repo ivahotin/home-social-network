@@ -14,4 +14,4 @@ COPY --from=build /app/views      /views
 EXPOSE 8000
 USER nonroot:nonroot
 
-ENTRYPOINT ["/httpserver"]
+CMD ["/httpserver"]
