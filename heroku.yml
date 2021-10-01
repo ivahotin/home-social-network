@@ -1,5 +1,9 @@
 build:
   docker:
+    release:
+      dockerfile: social/Dockerfile
+      target: production
     social: social/Dockerfile
+
 run:
   web: ./httpserver
