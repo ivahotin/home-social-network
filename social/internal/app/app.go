@@ -5,6 +5,7 @@ import (
 	"example.com/social/internal/usecases"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	transport "example.com/social/internal/transport/http"
@@ -26,7 +27,7 @@ func NewApplication(
 	getUserProfileByUserIdQuery usecases.GetProfileByUserIdQuery) *Application {
 	return &Application{
 		transport.NewServer(
-			":8080",
+			":" + os.Getenv("PORT"),
 			transport.MakeEndpoints(
 				signUpUseCase,
 				signInUseCase,
