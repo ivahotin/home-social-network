@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	"example.com/social/internal/domain"
 	"strings"
+	"time"
 )
 
 const (
-	insertStmt = "insert into profiles (username, password, firstname, lastname, age, gender, interests, city) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update username = username"
-	getProfileByUsernameStmt = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where username = ?"
-	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where (firstname like ? or lastname like ?) and id > ? order by id asc limit ?"
-	getProfilesByUserIds = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where id in "
-	getProfileByUserId = "select id, username, password, firstname, lastname, age, gender, interests, city from profiles where id = ?"
+	insertStmt = "insert into profiles (username, password, firstname, lastname, birthdate, gender, interests, city) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update username = username"
+	getProfileByUsernameStmt = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where username = ?"
+	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? or lastname like ?) and id > ? order by id asc limit ?"
+	getProfilesByUserIds = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id in "
+	getProfileByUserId = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id = ?"
 )
 
 type MySqlProfileStorage struct {
@@ -32,16 +33,22 @@ func (profileStorage *MySqlProfileStorage) GetProfileByUsername(username string)
 	defer stmt.Close()
 
 	var profile domain.Profile
+	var birthdate string
 	err = stmt.QueryRow(username).Scan(
 		&profile.Id,
 		&profile.Username,
 		&profile.Password,
 		&profile.Firstname,
 		&profile.Lastname,
-		&profile.Age,
+		&birthdate,
 		&profile.Gender,
 		&profile.Interests,
 		&profile.City)
+
+	profile.Birthdate, err = time.Parse("2006-01-02", birthdate)
+	if err != nil {
+		return nil, err
+	}
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -65,7 +72,7 @@ func (profileStorage *MySqlProfileStorage) SaveProfile(profile *domain.Profile) 
 		profile.Password,
 		profile.Firstname,
 		profile.Lastname,
-		profile.Age,
+		profile.Birthdate,
 		profile.Gender,
 		profile.Interests,
 		profile.City)
@@ -111,17 +118,22 @@ func (profileStorage *MySqlProfileStorage) GetProfilesBySearchTerm(
 	for rows.Next() {
 		profile := new(domain.Profile)
 
+		var birthdate string
 		if err = rows.Scan(
 			&profile.Id,
 			&profile.Username,
 			&profile.Password,
 			&profile.Firstname,
 			&profile.Lastname,
-			&profile.Age,
+			&birthdate,
 			&profile.Gender,
 			&profile.Interests,
 			&profile.City); err != nil {
 
+			return nil, err
+		}
+		profile.Birthdate, err = time.Parse("2006-01-02", birthdate)
+		if err != nil {
 			return nil, err
 		}
 
@@ -156,17 +168,22 @@ func (profileStorage *MySqlProfileStorage) GetProfilesByIds(userIds []int64) ([]
 	for rows.Next() {
 		profile := new(domain.Profile)
 
+		var birthdate string
 		if err = rows.Scan(
 			&profile.Id,
 			&profile.Username,
 			&profile.Password,
 			&profile.Firstname,
 			&profile.Lastname,
-			&profile.Age,
+			&birthdate,
 			&profile.Gender,
 			&profile.Interests,
 			&profile.City); err != nil {
 
+			return nil, err
+		}
+		profile.Birthdate, err = time.Parse("2006-01-02", birthdate)
+		if err != nil {
 			return nil, err
 		}
 
@@ -184,13 +201,14 @@ func (profileStorage *MySqlProfileStorage) GetProfileByUserId(userId int64) (*do
 	defer stmt.Close()
 
 	var profile domain.Profile
+	var birthdate string
 	err = stmt.QueryRow(userId).Scan(
 		&profile.Id,
 		&profile.Username,
 		&profile.Password,
 		&profile.Firstname,
 		&profile.Lastname,
-		&profile.Age,
+		&birthdate,
 		&profile.Gender,
 		&profile.Interests,
 		&profile.City)
@@ -199,6 +217,11 @@ func (profileStorage *MySqlProfileStorage) GetProfileByUserId(userId int64) (*do
 		if err == sql.ErrNoRows {
 			return nil, err
 		}
+		return nil, err
+	}
+
+	profile.Birthdate, err = time.Parse("2006-01-02", birthdate)
+	if err != nil {
 		return nil, err
 	}
 

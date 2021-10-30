@@ -6,14 +6,14 @@ window.onload = async () => {
         const password = e.target.querySelector("#password").value;
         const firstname = e.target.querySelector("#firstname").value;
         const lastname = e.target.querySelector("#lastname").value;
-        const age = parseInt(e.target.querySelector("#age").value);
+        const birthdate = e.target.querySelector("#birthdate").value + "T00:00:00Z";
         const gender = e.target.querySelector("#gender").value;
         const interests = e.target.querySelector("#interests").value;
         const city = e.target.querySelector("#city").value;
         try {
             const res = await fetch("/auth/sign-up", {
                 method: "POST",
-                body: JSON.stringify({ username, password, firstname, lastname, age, gender, interests, city }),
+                body: JSON.stringify({ username, password, firstname, lastname, birthdate, gender, interests, city }),
                 headers: {
                     "Content-Type": "application/json"
                 }

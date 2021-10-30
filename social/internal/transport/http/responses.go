@@ -1,6 +1,9 @@
 package http
 
-import "example.com/social/internal/domain"
+import (
+	"example.com/social/internal/domain"
+	"time"
+)
 
 type User struct {
 	Id        int64
@@ -8,14 +11,14 @@ type User struct {
 }
 
 type Profile struct {
-	Id        int64  `json:"id"`
-	Username  string `json:"username"`
-	Firstname string `json:"firstname"`
-	Lastname  string `json:"lastname"`
-	Age       int    `json:"age"`
-	Gender    string `json:"gender"`
-	City      string `json:"city"`
-	Interests string `json:"interests"`
+	Id        int64  	`json:"id"`
+	Username  string 	`json:"username"`
+	Firstname string 	`json:"firstname"`
+	Lastname  string 	`json:"lastname"`
+	Birthdate time.Time `json:"birthdate"`
+	Gender    string 	`json:"gender"`
+	City      string 	`json:"city"`
+	Interests string 	`json:"interests"`
 }
 
 type GetProfilesBySearchTerm struct {
@@ -39,7 +42,7 @@ func ConvertDomainProfileToResponseProfile(domainProfile *domain.Profile) *Profi
 	profile.Username 	= 	domainProfile.Username
 	profile.Firstname 	= 	domainProfile.Firstname
 	profile.Lastname 	=	domainProfile.Lastname
-	profile.Age 		= 	domainProfile.Age
+	profile.Birthdate 	= 	domainProfile.Birthdate
 	profile.City        = 	domainProfile.City
 	switch domainProfile.Gender {
 	case domain.Male: profile.Gender = "Male"

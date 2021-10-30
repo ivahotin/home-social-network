@@ -113,7 +113,7 @@ func makeSignUpEndpoint(signUseCase usecases.SignUpUseCase) gin.HandlerFunc {
 			Password: credentials.Password,
 			Firstname: signUpRequest.Firstname,
 			Lastname: signUpRequest.Lastname,
-			Age: signUpRequest.Age,
+			Birthdate: signUpRequest.Birthdate,
 			Gender: gender,
 			Interests: signUpRequest.Interests,
 			City: signUpRequest.City,

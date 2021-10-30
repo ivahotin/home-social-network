@@ -1,12 +1,18 @@
 window.onload = async () => {
 
+    let birthdateToAge = (birthdate) => {
+        let ageInMillis = Date.now() - new Date(birthdate);
+        return parseInt(ageInMillis / 31536000000);
+    }
+
     let renderFollowingList = (following) => {
         let renderFriend = (profile) => {
+            let age = birthdateToAge(profile.birthdate);
             let profileString = `
                 <tr id="followed-${profile.id}">
                     <td>${profile.firstname}</td>
                     <td>${profile.lastname}</td>
-                    <td>${profile.age}</td>
+                    <td>${age}</td>
                     <td>${profile.city}</td>
                     <td><button type="button" class="btn btn-success" id="unfollow-btn-${profile.id}" data-pk="${profile.id}">Unfollow</button></td>
                 </tr>`;
@@ -20,11 +26,12 @@ window.onload = async () => {
     let renderProfilePage = (profile, following) => {
         let myUsername = window.localStorage.getItem("username");
         let isMe = profile.username === myUsername;
+        let age = birthdateToAge(profile.birthdate);
 
         $("div#profile-id").text(profile.id);
         $("div#first-name").text(profile.firstname);
         $("div#last-name").text(profile.lastname);
-        $("div#age").text(profile.age);
+        $("div#age").text(age);
         $("div#gender").text(profile.gender);
         $("div#city").text(profile.city);
         $("div#interests").text(profile.interests);
@@ -124,11 +131,12 @@ window.onload = async () => {
     };
 
     let showProfile = (profile) => {
+        let age = birthdateToAge(profile.birthdate);
         let profileString = `
             <tr class='clickable-row'>
                 <td>${profile.firstname}</td>
                 <td>${profile.lastname}</td>
-                <td>${profile.age}</td>
+                <td>${age}</td>
                 <td>${profile.city}</td>
                 <td><button type="button" class="btn btn-success" id="profile-btn-${profile.id}" data-pk="${profile.id}">Link</button></td>
             </tr>`;

@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 type GenderType byte
 
@@ -15,7 +18,7 @@ type Profile struct {
 	Password 	string
 	Firstname 	string
 	Lastname 	string
-	Age 		int
+	Birthdate 	time.Time
 	Gender 		GenderType
 	Interests 	string
 	City  		string
