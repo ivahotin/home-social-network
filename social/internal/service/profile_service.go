@@ -16,8 +16,8 @@ func (profileService *ProfileService) GetProfileByUsername(username string) (*do
 	return profileService.ProfileStorage.GetProfileByUsername(username)
 }
 
-func (profileService *ProfileService) GetProfilesBySearchTerm(term string, cursor int64, limit int, myId int64) (*domain.ProfilesSearchResult, error) {
-	profiles, err := profileService.ProfileStorage.GetProfilesBySearchTerm(term, cursor, limit)
+func (profileService *ProfileService) GetProfilesBySearchTerm(firstname, lastname string, cursor int64, limit int, myId int64) (*domain.ProfilesSearchResult, error) {
+	profiles, err := profileService.ProfileStorage.GetProfilesBySearchTerm(firstname, lastname, cursor, limit)
 	if err != nil {
 		return nil, err
 	}

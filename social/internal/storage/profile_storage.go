@@ -10,7 +10,8 @@ import (
 const (
 	insertStmt = "insert into profiles (username, password, firstname, lastname, birthdate, gender, interests, city) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update username = username"
 	getProfileByUsernameStmt = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where username = ?"
-	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? or lastname like ?) and id > ? order by id asc limit ?"
+	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? and lastname like ?) and id > ? order by id asc limit ?"
+	getProfilesBySearchTermFirstPage = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? and lastname like ?) order by id asc limit ?"
 	getProfilesByUserIds = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id in "
 	getProfileByUserId = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id = ?"
 )
@@ -94,22 +95,36 @@ func (profileStorage *MySqlProfileStorage) SaveProfile(profile *domain.Profile) 
 }
 
 func (profileStorage *MySqlProfileStorage) GetProfilesBySearchTerm(
-	term string,
+	firstname, lastname string,
 	offset int64,
 	limit int) ([]*domain.Profile, error) {
 
 	profiles := make([]*domain.Profile, 0, limit)
-	stmt, err := profileStorage.db.Prepare(getProfilesBySearchTerm)
+	var stmt *sql.Stmt
+	var err error
+	if offset == 0 {
+		stmt, err = profileStorage.db.Prepare(getProfilesBySearchTermFirstPage)
+	} else {
+		stmt, err = profileStorage.db.Prepare(getProfilesBySearchTerm)
+	}
 	if err != nil {
 		return profiles, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(
-		term + "%",
-		term + "%",
-		offset,
-		limit)
+	var rows *sql.Rows
+	if offset == 0 {
+		rows, err = stmt.Query(
+			firstname + "%",
+			lastname + "%",
+			limit)
+	} else {
+		rows, err = stmt.Query(
+			firstname + "%",
+			lastname + "%",
+			offset,
+			limit)
+	}
 	if err != nil {
 		return profiles, err
 	}

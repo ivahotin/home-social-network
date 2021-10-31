@@ -238,7 +238,8 @@ func makeSearchEndpoint(getProfilesBySearchTerm usecases.GetProfilesBySearchTerm
 		myId := int64(claims["id"].(float64))
 
 		profilesSearchResult, err := getProfilesBySearchTerm.GetProfilesBySearchTerm(
-			searchRequest.SearchTerm,
+			searchRequest.Firstname,
+			searchRequest.Lastname,
 			searchRequest.Cursor,
 			searchRequest.Limit,
 			myId)

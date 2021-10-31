@@ -147,7 +147,8 @@ window.onload = async () => {
 
     let searchForPersons = async (term, cursor) => {
         const res = await fetch("/profiles/?" + new URLSearchParams({
-            term: term,
+            firstname: term,
+            lastname: term,
             cursor: cursor,
             limit: 10
         }));

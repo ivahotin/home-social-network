@@ -4,8 +4,8 @@ create table if not exists profiles (
     password          text not null constraint password_empty_field check (password != ''),
     firstname         varchar(30) not null,
     lastname          varchar(50) not null,
-    birthdate         date not null,
     gender            integer not null,
     interests         text not null,
-    city              varchar(20) not null
+    city              varchar(50) not null,
+    birthdate         date not null
 ) engine = InnoDB;

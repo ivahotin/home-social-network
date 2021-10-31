@@ -19,7 +19,8 @@ type SignUpRequest struct {
 }
 
 type SearchUsersRequest struct {
-	SearchTerm	string  `form:"term" binding:"required"`
+	Firstname	string  `form:"firstname" binding:"required"`
+	Lastname    string  `form:"lastname" binding:"required"`
 	Cursor      int64	`form:"cursor,default=0"`
 	Limit       int     `form:"limit" binding:"required,min=5,max=100"`
 }
