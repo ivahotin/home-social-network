@@ -14,7 +14,11 @@ DB_MAX_IDLE_CONNECTION=10
 ### Поиск анкет по имени и фамилии без использования индекса
 
 ```mysql
-select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like 'Ad%' and lastname like 'Kem%') order by id asc limit 100
+select id, username, password, firstname, lastname, birthdate, gender, interests, city 
+from profiles 
+where (firstname like 'Ad%' and lastname like 'Kem%') 
+order by id asc 
+limit 100
 ```
 
 План выполнения запроса
@@ -44,6 +48,8 @@ wrk -t100 -c1000 -d20s --timeout 90s -s ./indexes/generator.lua --latency http:/
 | 1000     | 8.71          | 10.70s (+/-) 5.34s | 20.15s |
 
 ### С композитным индексом
+
+Протестируем следующий композитный индекс на полях `firstname` и `lastname`, так как эти поля используются при поиске и именно в этом порядке.
 
 ```mysql
 create index firstname_lastname_idx on profiles (firstname, lastname) using btree;
@@ -116,7 +122,7 @@ create index firstname_lastname_idx on profiles (firstname, lastname) using btre
 
 ### Индекс на поле `firstname`
 
-В данном случае выбрано поле `firstname` так как его селективность в моем наборе выше.
+Попробуем использовать индекс с одним полем `firstname`. В данном случае выбрано поле `firstname` так как его селективность в моем наборе выше.
 
 ```mysql
 create index firstname_idx on profiles (firstname) using btree;
@@ -177,6 +183,14 @@ create index firstname_idx on profiles (firstname) using btree;
 | 100     | 2130.84         | 53.13ms (+/-) 44.13ms | 559.67ms | 
 | 1000     | 2233.32          | 698.76ms (+/-) 1.19s | 13.01s |
 
+
+### Графики
+
+![png](./indexes/rps.png)
+
+Для второго графика проведено логарифмическое масштабирование по оси Y
+
+![png](./indexes/latency.png)
 
 ### Вывод
 
