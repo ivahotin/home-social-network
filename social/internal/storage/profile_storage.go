@@ -11,7 +11,7 @@ import (
 const (
 	insertStmt = "insert into profiles (username, password, firstname, lastname, birthdate, gender, interests, city) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update username = username"
 	getProfileByUsernameStmt = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where username = ?"
-	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? and lastname like ?) and id > ? limit ?"
+	getProfilesBySearchTerm = "select id, firstname, lastname, birthdate, city from profiles where (firstname like ? and lastname like ?) and id > ? limit ?"
 	getProfilesByUserIds = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id in "
 	getProfileByUserId = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id = ?"
 )
@@ -131,13 +131,13 @@ func (profileStorage *MySqlProfileStorage) GetProfilesBySearchTerm(
 		var birthdate string
 		if err = rows.Scan(
 			&profile.Id,
-			&profile.Username,
-			&profile.Password,
+			//&profile.Username,
+			//&profile.Password,
 			&profile.Firstname,
 			&profile.Lastname,
 			&birthdate,
-			&profile.Gender,
-			&profile.Interests,
+			//&profile.Gender,
+			//&profile.Interests,
 			&profile.City); err != nil {
 
 			return nil, err

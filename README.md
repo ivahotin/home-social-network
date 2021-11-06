@@ -227,6 +227,27 @@ create index firstname_idx on profiles (firstname) using btree;
 
 ![png](./indexes/latency.png)
 
+### Почему не сортируем в БД.
+
+```mysql
+select id, username, password, firstname, lastname, birthdate, gender, interests, city 
+from profiles 
+where (firstname like 'Ad%' and lastname like 'Kem%') and id > 0
+order by id asc
+limit 10
+```
+
+План запроса
+```
++----+-------------+----------+------------+-------+--------------------------------+---------+---------+------+--------+----------+-------------+
+| id | select_type | table    | partitions | type  | possible_keys                  | key     | key_len | ref  | rows   | filtered | Extra       |
++----+-------------+----------+------------+-------+--------------------------------+---------+---------+------+--------+----------+-------------+
+|  1 | SIMPLE      | profiles | NULL       | range | PRIMARY,firstname_lastname_idx | PRIMARY | 8       | NULL | 497205 |     0.20 | Using where |
++----+-------------+----------+------------+-------+--------------------------------+---------+---------+------+--------+----------+-------------+
+```
+
+Из плана видно, что сортировка по id на стороне БД вынуждает выбрать для поиска первичный ключ и прочитать половину таблицы.
+
 ### Вывод
 
 Лучший результат по метрикам `RPS` и `latency` показал вариант №2
