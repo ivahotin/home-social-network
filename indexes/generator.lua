@@ -7,11 +7,11 @@ request = function()
     -- define the path that will search for q=%v 9%v being a random number between 0 and 1000)
     local firstName = array[math.random(26)] .. array[math.random(26)] .. array[math.random(26)]
     local lastName  = array[math.random(26)] .. array[math.random(26)] .. array[math.random(26)]
-    local url_path = "/profiles?firstName=" .. encodeURI(firstName) .. "&lastName=" .. encodeURI(lastName) .. "&limit=100&cursor=0"
+    local url_path = "/profiles?firstname=" .. encodeURI(firstName) .. "&lastname=" .. encodeURI(lastName) .. "&limit=100&cursor=0"
     -- if we want to print the path generated
 --    print(url_path)
     -- Return the request object with the current URL path
-    wrk.headers["Cookie"] = "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MzU3MDYyNzksImlkIjoxMDAwMDAxLCJvcmlnX2lhdCI6MTYzNTcwMjY3OSwidXNlcm5hbWUiOiJhZG1pbiJ9._cUL3lJbpcMipchUry5wc2zonMUNnmm1VIxhSgcqcZU"
+    wrk.headers["Cookie"] = "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MzYyMDUzNjMsImlkIjoxMDAwMDAxLCJvcmlnX2lhdCI6MTYzNjIwMTc2MywidXNlcm5hbWUiOiJhZG1pbiJ9.j3WveLvOuCTvxuLBUrIjjMBJZmNdMr-TDQ9QrcvFc_Y"
     return wrk.format("GET", url_path)
 end
 

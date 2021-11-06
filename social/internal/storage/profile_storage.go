@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"example.com/social/internal/domain"
+	"sort"
 	"strings"
 	"time"
 )
@@ -10,8 +11,7 @@ import (
 const (
 	insertStmt = "insert into profiles (username, password, firstname, lastname, birthdate, gender, interests, city) values (?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update username = username"
 	getProfileByUsernameStmt = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where username = ?"
-	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? and lastname like ?) and id > ? order by id asc limit ?"
-	getProfilesBySearchTermFirstPage = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? and lastname like ?) order by id asc limit ?"
+	getProfilesBySearchTerm = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where (firstname like ? and lastname like ?) and id > ? limit ?"
 	getProfilesByUserIds = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id in "
 	getProfileByUserId = "select id, username, password, firstname, lastname, birthdate, gender, interests, city from profiles where id = ?"
 )
@@ -25,6 +25,12 @@ func NewMySqlProfileStorage(db *sql.DB) *MySqlProfileStorage {
 		db: db,
 	}
 }
+
+type ById []*domain.Profile
+
+func (a ById) Len() int { return len(a) }
+func (a ById) Less(i, j int) bool { return a[i].Id < a[j].Id }
+func (a ById) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func (profileStorage *MySqlProfileStorage) GetProfileByUsername(username string) (*domain.Profile, error) {
 	stmt, err := profileStorage.db.Prepare(getProfileByUsernameStmt)
@@ -102,29 +108,18 @@ func (profileStorage *MySqlProfileStorage) GetProfilesBySearchTerm(
 	profiles := make([]*domain.Profile, 0, limit)
 	var stmt *sql.Stmt
 	var err error
-	if offset == 0 {
-		stmt, err = profileStorage.db.Prepare(getProfilesBySearchTermFirstPage)
-	} else {
-		stmt, err = profileStorage.db.Prepare(getProfilesBySearchTerm)
-	}
+	stmt, err = profileStorage.db.Prepare(getProfilesBySearchTerm)
 	if err != nil {
 		return profiles, err
 	}
 	defer stmt.Close()
 
 	var rows *sql.Rows
-	if offset == 0 {
-		rows, err = stmt.Query(
-			firstname + "%",
-			lastname + "%",
-			limit)
-	} else {
-		rows, err = stmt.Query(
-			firstname + "%",
-			lastname + "%",
-			offset,
-			limit)
-	}
+	rows, err = stmt.Query(
+		firstname + "%",
+		lastname + "%",
+		offset,
+		limit)
 	if err != nil {
 		return profiles, err
 	}
@@ -154,6 +149,8 @@ func (profileStorage *MySqlProfileStorage) GetProfilesBySearchTerm(
 
 		profiles = append(profiles, profile)
 	}
+
+	sort.Sort(ById(profiles))
 
 	return profiles, nil
 }
