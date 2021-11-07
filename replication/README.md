@@ -36,7 +36,7 @@ show master status;
 +---------------+----------+--------------+------------------+-------------------+
 | File          | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
 +---------------+----------+--------------+------------------+-------------------+
-| binlog.000003 |      657 |              |                  |                   |
+| binlog.000003 |      675 |              |                  |                   |
 +---------------+----------+--------------+------------------+-------------------+
 ```
 
@@ -55,7 +55,7 @@ CHANGE MASTER TO
     MASTER_USER='replica',
     MASTER_PASSWORD='secret',
     MASTER_LOG_FILE='mysql-bin.000003',
-    MASTER_LOG_POS=657;
+    MASTER_LOG_POS=675;
 ```
 
 Запускаем слейв
@@ -110,7 +110,7 @@ show tables;
 Теперь загрузим данные профайлов. После выгрузки вспоминаем, что лучше бы сначала импортировать данные, а уже потом создавать индексы.
 
 ```
-load data infile '/out.csv' into profiles fields terminated by ',' ignore 1 rows;
+load data infile '/out.csv' into table profiles fields terminated by ',' ignore 1 lines;
 ```
 
 Проверяем, что данные доехали на слейвы
@@ -149,7 +149,7 @@ select * from mysql_users;
 Далее добавим правило направляющее весь трафик на мастер
 
 ```
-insert into mysql_query_rules (active, match_pattern, destination_hostgroup, cache_ttl, username) values (1, '*', 0, NULL, 'user');
+insert into mysql_query_rules (active, match_pattern, destination_hostgroup, cache_ttl, username) values (1, '^.*$', 0, NULL, 'user');
 LOAD MYSQL QUERY RULES TO RUNTIME;
 SAVE MYSQL QUERY RULES TO DISK;
 ```
@@ -188,3 +188,166 @@ select * from profiles limit 5;
 Схема стенда перед первым прогоном нагрузочных тестов.
 
 ![png](./assets/schema.png)
+
+## Нагрузочное тестирование (весь трафик на master)
+
+```
+wrk -t100 -c100 -d30s --timeout 90s -s ../indexes/generator.lua --latency http://localhost:8080
+
+Running 30s test @ http://localhost:8080
+  100 threads and 100 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    11.51ms    7.28ms  98.75ms   79.83%
+    Req/Sec    91.92     20.91   300.00     67.47%
+  Latency Distribution
+     50%    9.62ms
+     75%   14.35ms
+     90%   20.69ms
+     99%   37.66ms
+  275795 requests in 30.10s, 44.95MB read
+Requests/sec:   9162.65
+Transfer/sec:      1.49MB
+```
+
+```
+docker stats -a
+
+CONTAINER ID   NAME                    CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O         PIDS
+b6c97d6b9b32   social-db-slave1        0.12%     526MiB / 15.58GiB     3.30%     86.4MB / 180kB    18.2MB / 1.43GB   43
+be2e7db7d4a5   social-db               125.88%   961.8MiB / 15.58GiB   6.03%     137MB / 651MB     9MB / 1.39GB      60
+cd3ddbdde6e5   proxysql                80.25%    12.51MiB / 15.58GiB   0.08%     1.13GB / 1.86GB   4.1kB / 463kB     19
+6ca456334067   social-db-slave2        0.12%     515MiB / 15.58GiB     3.23%     86.4MB / 130kB    8.99MB / 1.43GB   42
+...
+```
+Видно, что потребление CPU мастер ноды составляет ~125%, также нагружен proxysql.
+
+## Нагрузочное тестирование (чтение анкет с реплик)
+
+Добавим соответствующие правила в ProxySQL
+
+```
+insert into mysql_query_rules (active, match_pattern, destination_hostgroup, cache_ttl, username) values (1, '^select .* from profiles where (firstname like .*$', 2, NULL, 'user');
+insert into mysql_query_rules (active, match_pattern, destination_hostgroup, cache_ttl, username) values (1, '^select .* from profiles where id = .*$', 2, NULL, 'user');
+LOAD MYSQL QUERY RULES TO RUNTIME;
+SAVE MYSQL QUERY RULES TO DISK;
+```
+
+Даем нагрузку
+
+```
+wrk -t100 -c100 -d30s --timeout 90s -s ../indexes/generator.lua --latency http://localhost:8080
+
+Running 30s test @ http://localhost:8080
+  100 threads and 1000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   176.14ms  276.89ms   5.02s    89.77%
+    Req/Sec   101.24     40.21     1.39k    71.25%
+  Latency Distribution
+     50%   73.06ms
+     75%  185.69ms
+     90%  462.06ms
+     99%    1.40s 
+  282218 requests in 30.10s, 45.84MB read
+  Socket errors: connect 79, read 0, write 0, timeout 0
+Requests/sec:   9376.50
+Transfer/sec:      1.52MB
+```
+
+```
+CONTAINER ID   NAME                    CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O         PIDS
+b6c97d6b9b32   social-db-slave1        60.88%    547.2MiB / 15.58GiB   3.43%     94.1MB / 27.3MB   18.3MB / 1.43GB   50
+be2e7db7d4a5   social-db               0.13%     1.074GiB / 15.58GiB   6.90%     195MB / 857MB     9MB / 1.39GB      60
+cd3ddbdde6e5   proxysql                81.45%    13.81MiB / 15.58GiB   0.09%     1.74GB / 2.87GB   4.1kB / 643kB     19
+6ca456334067   social-db-slave2        61.28%    536.7MiB / 15.58GiB   3.36%     94.2MB / 27.4MB   9.04MB / 1.43GB   50
+```
+
+### Настройка полу синхронной репликации.
+
+## Включаем row-based репликацию и gtid
+
+Обновляем конфигурационный файл my.cnf на всех узлах БД и рестартуем контейнеры.
+```
+[mysqld]
+...
+binlog_format    = ROW
+gtid_mode = on
+enforce_gtid_consistency = true
+...
+```
+
+Проверяем конфигурацию на всех узлах
+```
+show variables like 'binlog_format';
+
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| binlog_format | ROW   |
++---------------+-------+
+
+show variables like 'gtid_mode';
+
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| gtid_mode     | ON    |
++---------------+-------+
+```
+
+Далее на каждом слейве включаем автопозиционирование.
+```
+stop slave;
+change master to MASTER_AUTO_POSITION = 1;
+start slave;
+```
+
+### Настраиваем полу синхронную репликацию на master.
+
+Выполняем команду
+```
+install plugin rpl_semi_sync_master soname 'semisync_master.so';
+
+select plugin_name, plugin_status from information_schema.plugins where plugin_name like '%semi%';
++----------------------+---------------+
+| PLUGIN_NAME          | PLUGIN_STATUS |
++----------------------+---------------+
+| rpl_semi_sync_master | ACTIVE        |
++----------------------+---------------+
+```
+
+Обновляем конфигурацию `my.conf`
+
+```
+[mysqld]
+...
+rpl_semi_sync_master_enabled = 1
+rpl_semi_sync_master_timeout = 400
+...
+```
+
+Рестартуем контейнер
+
+### Настраиваем полу синхронную репликацию на slaves.
+
+Выполняем команду
+```
+install plugin rpl_semi_sync_slave soname 'semisync_slave.so';
+
+select plugin_name, plugin_status from information_schema.plugins where plugin_name like '%semi%';
++---------------------+---------------+
+| plugin_name         | plugin_status |
++---------------------+---------------+
+| rpl_semi_sync_slave | ACTIVE        |
++---------------------+---------------+
+```
+
+Обновляем конфиг и рестартуем слейвы
+
+```
+[mysqld]
+...
+rpl_semi_sync_master_enabled = 1
+...
+```
+
+## Нагрузка на запись

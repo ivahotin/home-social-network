@@ -9,7 +9,6 @@ services:
     volumes:
       - mysql-db:/var/lib/mysql:rw,cached
       - ./master.conf:/etc/mysql/my.cnf
-      - mysql-db-log:/var/log/mysql:rw,cached
     environment:
       - MYSQL_DATABASE=social_db
       - MYSQL_USER=user
@@ -27,7 +26,6 @@ services:
     volumes:
       - mysql-db-slave1:/var/lib/mysql:rw,cached
       - ./slave1.conf:/etc/mysql/my.cnf
-      - mysql-db-slave1-log:/var/log/mysql:rw,cached
     environment:
       - MYSQL_DATABASE=social_db
       - MYSQL_USER=user
@@ -45,7 +43,6 @@ services:
     volumes:
       - mysql-db-slave2:/var/lib/mysql:rw,cached
       - ./slave2.conf:/etc/mysql/my.cnf
-      - mysql-db-slave2-log:/var/log/mysql:rw,cached
     environment:
       - MYSQL_DATABASE=social_db
       - MYSQL_USER=user
@@ -73,9 +70,6 @@ networks:
 
 volumes:
   mysql-db:
-  mysql-db-log:
   mysql-db-slave1:
-  mysql-db-slave1-log:
   mysql-db-slave2:
-  mysql-db-slave2-log:
   proxysql:

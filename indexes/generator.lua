@@ -11,7 +11,7 @@ request = function()
     -- if we want to print the path generated
 --    print(url_path)
     -- Return the request object with the current URL path
-    wrk.headers["Cookie"] = "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MzYyMDk0MzgsImlkIjoxMDAwMDAxLCJvcmlnX2lhdCI6MTYzNjIwNTgzOCwidXNlcm5hbWUiOiJhZG1pbiJ9.KEuGnnxuuuFyCHuKSbFDrff3BqUGOQgrURbTbmmKGD8"
+    wrk.headers["Cookie"] = "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MzYyODY0NDQsImlkIjoxMDAwMDAxLCJvcmlnX2lhdCI6MTYzNjI4Mjg0NCwidXNlcm5hbWUiOiJhZG1pbiJ9.GE5JgpgGB0QhJm2rqpGWYUkZt-H7qz-I6ymGDfG0j6E"
     return wrk.format("GET", url_path)
 end
 
