@@ -351,3 +351,82 @@ rpl_semi_sync_master_enabled = 1
 ```
 
 ## Нагрузка на запись
+
+Запускаем нагрузку на запись, ждем 10-15 секунд и убиваем мастер
+
+```
+wrk -t100 -c100 -d30s --timeout 90s -s ./replication/write_generator.lua --latency http://localhost:8080
+```
+
+После завершения теста проверяем переменную gtid на слейвах
+
+Слейв 1
+```
+show variables like 'gtid_executed';
++---------------+--------------------------------------------+
+| Variable_name | Value                                      |
++---------------+--------------------------------------------+
+| gtid_executed | 0f031b2e-3fb7-11ec-a1e2-0242c0a87003:1-166 |
++---------------+--------------------------------------------+
+```
+
+Cлейв 2
+```
+show variables like 'gtid_executed';
+
++---------------+--------------------------------------------+
+| Variable_name | Value                                      |
++---------------+--------------------------------------------+
+| gtid_executed | 1033e597-3fb7-11ec-a07b-0242c0a87005:1-166 |
++---------------+--------------------------------------------+
+```
+
+Поднимем мастер, чтобы оценить количество потерянных записей
+
+```
+select count(*) from followers;
++----------+
+| count(*) |
++----------+
+|      166 |
++----------+
+```
+
+Можно сделать вывод, что в результате аварии потери записей не произошло.
+
+Убьем мастер и сделаем новым мастером первый слейв.
+
+```
+docker kill social_db
+docker exec -it social-db-slave1 bash
+mysql -uroot -ppassword -hslave1
+show slave status\G
+
+...
+Last_IO_Error: error reconnecting to master 'replica@master:3306' - retry-time: 60 retries: 2 message: Unknown MySQL server host 'master' (11)
+...
+stop slave;
+create user 'replica'@'%' IDENTIFIED BY 'slave_secret';
+grant replication slave on *.* TO 'replica'@'%';
+reset master;
+```
+
+Далее во втором слейве
+
+```
+stop slave;
+change master to MASTER_HOST='slave1', MASTER_PASSWORD='slave_secret';
+start slave;
+show slave status\G
+
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for source to send event
+                  Master_Host: slave1
+                  Master_User: replica
+                  Master_Port: 3306
+                Connect_Retry: 60
+              Master_Log_File: mysql-bin.000001
+          Read_Master_Log_Pos: 156
+               Relay_Log_File: 6ca456334067-relay-bin.000002
+...
+```
