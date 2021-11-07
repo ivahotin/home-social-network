@@ -3,5 +3,5 @@ create table if not exists followers (
     user_id         bigint not null,
     is_active       boolean not null,
     created_at      timestamp default current_timestamp(),
-    primary key (follower_id, user_id)
+    primary key (user_id, follower_id)
 ) engine = InnoDB;

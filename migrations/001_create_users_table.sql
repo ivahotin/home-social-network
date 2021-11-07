@@ -9,3 +9,4 @@ create table if not exists profiles (
     city              varchar(50) not null,
     birthdate         date not null
 ) engine = InnoDB;
+create index firstname_lastname_idx on profiles (firstname, lastname) using btree;

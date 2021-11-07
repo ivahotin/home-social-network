@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+  master:
+    image: mysql:8.0
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: social-db
+    volumes:
+      - mysql-db:/var/lib/mysql:rw,cached
+      - ./master.conf:/etc/mysql/my.cnf
+      - mysql-db-log:/var/log/mysql:rw,cached
+    environment:
+      - MYSQL_DATABASE=social_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - social-net
+    ports:
+      - "3306:3306"
+  slave1:
+    image: mysql:8.0
+    restart: always
+    container_name: social-db-slave1
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql-db-slave1:/var/lib/mysql:rw,cached
+      - ./slave1.conf:/etc/mysql/my.cnf
+      - mysql-db-slave1-log:/var/log/mysql:rw,cached
+    environment:
+      - MYSQL_DATABASE=social_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - social-net
+    ports:
+      - "3307:3306"
+  slave2:
+    image: mysql:8.0
+    restart: always
+    container_name: social-db-slave2
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql-db-slave2:/var/lib/mysql:rw,cached
+      - ./slave2.conf:/etc/mysql/my.cnf
+      - mysql-db-slave2-log:/var/log/mysql:rw,cached
+    environment:
+      - MYSQL_DATABASE=social_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - social-net
+    ports:
+      - "3308:3306"
+  proxysql:
+    image: proxysql/proxysql:2.0.6
+    container_name: proxysql
+    volumes:
+      - ./proxysql.cnf:/etc/proxysql.cnf
+      - proxysql:/var/lib/proxysql
+    ports:
+      - "6033:6033"
+      - "6032:6032"
+      - "6080:6080"
+    networks:
+      - social-net
+networks:
+  social-net:
+    driver: bridge
+
+volumes:
+  mysql-db:
+  mysql-db-log:
+  mysql-db-slave1:
+  mysql-db-slave1-log:
+  mysql-db-slave2:
+  mysql-db-slave2-log:
+  proxysql:
