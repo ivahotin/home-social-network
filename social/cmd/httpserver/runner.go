@@ -13,11 +13,14 @@ import (
 
 func main() {
 	db := db2.NewDbPool()
+	chatDb := db2.NewChatDbPool()
 	profileStorage := storage.NewMySqlProfileStorage(db)
 	authService := service.NewAuthService(profileStorage)
 	profileService := service.NewProfileService(profileStorage)
 	followerStorage := storage.NewMysqlFollowerStorage(db)
 	followerService := service.NewFriendshipService(followerStorage)
+	chatStorage := storage.NewCockroachChatStorage(chatDb)
+	chatService := service.NewChatService(chatStorage)
 	application := app.NewApplication(
 		authService,
 		authService,
@@ -27,7 +30,8 @@ func main() {
 		followerService,
 		profileService,
 		followerService,
-		profileService)
+		profileService,
+		chatService)
 
 	go application.Run()
 

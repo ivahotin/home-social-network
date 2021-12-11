@@ -24,7 +24,8 @@ func NewApplication(
 	getFollowingByUserIdQuery usecases.GetFollowingByUserIdQuery,
 	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery,
 	unfollowUseCase usecases.UnFollowUseCase,
-	getUserProfileByUserIdQuery usecases.GetProfileByUserIdQuery) *Application {
+	getUserProfileByUserIdQuery usecases.GetProfileByUserIdQuery,
+	publishMessageUseCase usecases.PublishMessageUseCase) *Application {
 	return &Application{
 		transport.NewServer(
 			":" + os.Getenv("PORT"),
@@ -37,7 +38,8 @@ func NewApplication(
 				getFollowingByUserIdQuery,
 				getProfilesByUserIdsQuery,
 				unfollowUseCase,
-				getUserProfileByUserIdQuery)),
+				getUserProfileByUserIdQuery,
+				publishMessageUseCase)),
 	}
 }
 

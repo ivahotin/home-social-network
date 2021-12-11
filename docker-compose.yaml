@@ -19,6 +19,51 @@ services:
             - social-net
         ports:
             - "3306:3306"
+    chat-db1:
+        image: cockroachdb/cockroach:v21.2.2
+        container_name: node1
+        ports:
+            - "26257:26257"
+            - "8080:8080"
+        command: start-single-node --insecure
+        networks:
+            - social-net
+#    chat-db2:
+#        image: cockroachdb/cockroach:v21.2.2
+#        container_name: node2
+#        ports:
+#            - "26258:26257"
+#            - "8081:8080"
+#        command: start --insecure --join=node1
+#        networks:
+#            - social-net
+#    chat-db3:
+#        image: cockroachdb/cockroach:v21.2.2
+#        container_name: node3
+#        ports:
+#            - "26259:26257"
+#            - "8082:8080"
+#        command: start --insecure --join=node1
+#        networks:
+#            - social-net
+#    chat-db4:
+#        image: cockroachdb/cockroach:v21.2.2
+#        container_name: node4
+#        ports:
+#            - "26260:26257"
+#            - "8083:8080"
+#        command: start --insecure --join=node1
+#        networks:
+#            - social-net
+#    chat-db5:
+#        image: cockroachdb/cockroach:v21.2.2
+#        container_name: node5
+#        ports:
+#            - "26261:26257"
+#            - "8084:8080"
+#        command: start --insecure --join=node1
+#        networks:
+#            - social-net
 #    social:
 #         build: ./social
 #         container_name: social-network
@@ -36,3 +81,4 @@ networks:
 
 volumes:
     mysql-db:
+    postgresql-db:

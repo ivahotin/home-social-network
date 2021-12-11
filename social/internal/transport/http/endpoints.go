@@ -17,6 +17,7 @@ type Endpoints struct {
 	Auth 		*AuthEndpoints
 	Profile 	*ProfileEndpoints
 	Following  	*FollowingEndpoints
+	Chat        *ChatEndpoints
 }
 
 type AuthEndpoints struct {
@@ -38,6 +39,10 @@ type FollowingEndpoints struct {
 	UnFollow    gin.HandlerFunc
 }
 
+type ChatEndpoints struct {
+	Publish     gin.HandlerFunc
+}
+
 func MakeEndpoints(
 	signUpUseCase usecases.SignUpUseCase,
 	signInUseCase usecases.SignInUseCase,
@@ -47,7 +52,8 @@ func MakeEndpoints(
 	getFriendsByUserIdQuery usecases.GetFollowingByUserIdQuery,
 	getProfilesByUserIdsQuery usecases.GetProfilesByUserIdsQuery,
 	unfollowUseCase usecases.UnFollowUseCase,
-	getProfileQuery usecases.GetProfileByUserIdQuery) *Endpoints {
+	getProfileQuery usecases.GetProfileByUserIdQuery,
+	publishMessageUseCase usecases.PublishMessageUseCase) *Endpoints {
 	return &Endpoints{
 		Home: makeHomePage(),
 		Auth: &AuthEndpoints{
@@ -64,6 +70,9 @@ func MakeEndpoints(
 		Following: &FollowingEndpoints{
 			Follow: makeFollowEndpoint(followUseCase),
 			UnFollow: makeUnFollowEndpoint(unfollowUseCase),
+		},
+		Chat: &ChatEndpoints{
+			Publish: makePublishChatEndpoint(publishMessageUseCase),
 		},
 	}
 }
@@ -296,6 +305,31 @@ func makeUnFollowEndpoint(unfollowUseCase usecases.UnFollowUseCase) gin.HandlerF
 		}
 
 		ctx.Status(http.StatusOK)
+	}
+}
+
+func makePublishChatEndpoint(publishMessageUseCase usecases.PublishMessageUseCase) gin.HandlerFunc {
+	var req PublishMessageRequest
+	var chatUri ChatRequest
+	return func (c *gin.Context) {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+		if err := c.ShouldBindUri(&chatUri); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+			return
+		}
+		claims := jwt.ExtractClaims(c)
+		authorId := int64(claims["id"].(float64))
+
+		err := publishMessageUseCase.Publish(authorId, chatUri.ChatId, req.Message)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			return
+		}
+
+		c.Status(http.StatusOK)
 	}
 }
 

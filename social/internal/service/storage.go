@@ -15,3 +15,7 @@ type FollowersStorage interface {
 	RemoveFollower(follower *domain.Follower) error
 	GetFollowingByUserId(userId int64) ([]int64, error)
 }
+
+type ChatStorage interface {
+	SaveMessage(message *domain.Message) error
+}

@@ -1,8 +1,10 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"os"
 	"strconv"
 	"time"
@@ -47,4 +49,23 @@ func NewDbPool() *sql.DB {
 	//}
 
 	return db
+}
+
+func NewChatDbPool() *pgxpool.Pool {
+	config, err := pgxpool.ParseConfig(os.Getenv("CHAT_DB"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	config.MaxConns = 24
+	config.MinConns = 5
+	config.MaxConnIdleTime = time.Duration(time.Duration.Seconds(15))
+	config.MaxConnLifetime = time.Duration(time.Duration.Seconds(600))
+	pool, err := pgxpool.ConnectConfig(context.Background(), config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+
+	return pool
 }

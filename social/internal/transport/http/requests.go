@@ -36,3 +36,11 @@ type UnfollowRequest struct {
 type GetProfileByIdRequest struct {
 	UserId        int64   `uri:"id" binding:"required"`
 }
+
+type ChatRequest struct {
+	ChatId        int64   `uri:"chat_id" binding:"required"`
+}
+
+type PublishMessageRequest struct {
+	Message    string `json:"message"`
+}

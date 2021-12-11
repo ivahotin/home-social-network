@@ -51,6 +51,12 @@ func NewServer(addr string, endpoints *Endpoints) *http.Server {
 		c.JSON(http.StatusOK, gin.H{})
 	})
 
+	chat := router.Group("/chats")
+	chat.Use(endpoints.Auth.JWTMiddleWare.MiddlewareFunc())
+	{
+		chat.POST("/:chat_id/messages", endpoints.Chat.Publish)
+	}
+
 	return &http.Server{
 		Addr:    addr,
 		Handler: router,
